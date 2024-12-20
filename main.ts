@@ -21,7 +21,7 @@ async function main() {
   try {
     const client = await getClient();
     console.log('fetching actions');
-    const actions = await client.get('/actions');
+    const actions = await client.get('/actions?version=v2');
     console.log('fetching blueprints');
     const blueprints = await client.get('/blueprints');
     console.log('fetching scorecards');
