@@ -27,6 +27,10 @@ interface PortWebhook {
     title: string;
 }
 
+interface PortPage {
+    identifier: string;
+}
+
 export async function generateActionImports(actions: PortAction[]): Promise<string[]> {
     const importBlocks: string[] = [];
     
@@ -86,6 +90,22 @@ export async function generateWebhookImports(webhooks: PortWebhook[]): Promise<s
         );
     });
     
+    return importBlocks;
+}
+
+export async function generatePageImports(pages: PortPage[]): Promise<string[]> {
+    const importBlocks: string[] = [];
+    pages.forEach((page: PortPage) => {
+        // Skip pages for system blueprints, or system features
+        if (!page.identifier.startsWith('$') && !page.identifier.startsWith('_')) {
+            importBlocks.push(
+                `import {
+        to = port_page.${page.identifier}
+        id = "${page.identifier}" 
+    }`
+            );
+        }
+    });
     return importBlocks;
 }
 
