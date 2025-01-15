@@ -6,6 +6,7 @@ import {
   generateScorecardImports,
   generateIntegrationImports,
   generateWebhookImports,
+  generatePageImports,
   writeImportBlocksToFile 
 } from './src/tf_import_block_generator';
 
@@ -30,6 +31,8 @@ async function main() {
     const integrations = await client.get('/integration');
     console.log('fetching webhooks');
     const webhooks = await client.get('/webhooks');
+    console.log('fetching pages');
+    const pages = await client.get('/pages');
 
 
     console.log('generating tf import files');
@@ -38,32 +41,16 @@ async function main() {
     const scorecardImports = await generateScorecardImports(scorecards.scorecards);
     const integrationImports = await generateIntegrationImports(integrations.integrations);
     const webhookImports = await generateWebhookImports(webhooks.integrations);
+    const pageImports = await generatePageImports(pages.pages);
 
     await Promise.all([
         writeImportBlocksToFile(actionImports, 'action_imports.tf'),
         writeImportBlocksToFile(blueprintImports, 'blueprint_imports.tf'),
         writeImportBlocksToFile(scorecardImports, 'scorecard_imports.tf'),
         writeImportBlocksToFile(integrationImports, 'integration_imports.tf'),
-        writeImportBlocksToFile(webhookImports, 'webhook_imports.tf')
+        writeImportBlocksToFile(webhookImports, 'webhook_imports.tf'),
+        writeImportBlocksToFile(pageImports, 'page_imports.tf')
     ]);
-
-
-//     const program = new Command();
-
-//     program
-//       .name('export-buddy')
-//       .description('CLI grab all the entities you want to codify in terraform');
-
-//     program
-//       .command('add-all-import-blocks')
-//       .description('Add all import blocks all blueprints, mappings, actions and automations')
-//       .action(async () => {
-//         // get the data
-//         // create the tf import blocks 
-//       });
-
-
-//     await program.parseAsync();
 
   } catch (error) {
     console.error('Error:', error);
