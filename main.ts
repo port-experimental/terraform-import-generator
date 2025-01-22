@@ -1,5 +1,4 @@
-import { Command } from 'commander';
-import { getEntities, upsertEntity, getClient } from './src/port_client';
+import { getClient } from './src/port_client';
 import { 
   generateActionImports, 
   generateBlueprintImports, 
