@@ -24,7 +24,7 @@ bun run main.ts
 
 ```
 ls *.tf
-cat blueprints.tf
+cat blueprint_imports.tf
 ```
 
 5. Now run terraform to import
