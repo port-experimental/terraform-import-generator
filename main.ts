@@ -6,6 +6,7 @@ import {
   generateIntegrationImports,
   generateWebhookImports,
   generatePageImports,
+  generateFolderImports,
   writeImportBlocksToFile 
 } from './src/tf_import_block_generator';
 
@@ -41,6 +42,7 @@ async function main() {
     const integrationImports = await generateIntegrationImports(integrations.integrations);
     const webhookImports = await generateWebhookImports(webhooks.integrations);
     const pageImports = await generatePageImports(pages.pages);
+    const folderImports = await generateFolderImports(pages.pages);
 
     await Promise.all([
         writeImportBlocksToFile(actionImports, 'action_imports.tf'),
@@ -48,7 +50,8 @@ async function main() {
         writeImportBlocksToFile(scorecardImports, 'scorecard_imports.tf'),
         writeImportBlocksToFile(integrationImports, 'integration_imports.tf'),
         writeImportBlocksToFile(webhookImports, 'webhook_imports.tf'),
-        writeImportBlocksToFile(pageImports, 'page_imports.tf')
+        writeImportBlocksToFile(pageImports, 'page_imports.tf'),
+        writeImportBlocksToFile(folderImports, 'folder_imports.tf')
     ]);
 
   } catch (error) {
