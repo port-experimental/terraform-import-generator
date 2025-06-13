@@ -118,7 +118,7 @@ export async function generateFolderImports(pages: PortPage[]): Promise<string[]
     const seenParents = new Set<string>();
 
     pages.forEach((page: PortPage) => {
-        // filter out folders that are null or start with numberal (invalid HCL syntax)
+        // filter out folders that are null or start with digit (invalid HCL syntax)
         if (page.parent && 
             !/^\d/.test(page.parent) &&
             !seenParents.has(page.parent)) {
