@@ -126,7 +126,7 @@ export async function generateFolderImports(pages: PortPage[]): Promise<string[]
             seenParents.add(page.parent);
             importBlocks.push(
                 `import {
-        to = port_page.${page.parent}
+        to = port_folder.${page.parent}
         id = "${page.parent}" 
     }`
             );
