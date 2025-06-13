@@ -29,6 +29,7 @@ interface PortWebhook {
 
 interface PortPage {
     identifier: string;
+    parent?: string | null;
 }
 
 export async function generateActionImports(actions: PortAction[]): Promise<string[]> {
@@ -102,6 +103,31 @@ export async function generatePageImports(pages: PortPage[]): Promise<string[]> 
                 `import {
         to = port_page.${page.identifier}
         id = "${page.identifier}" 
+    }`
+            );
+        }
+    });
+    return importBlocks;
+}
+
+
+
+export async function generateFolderImports(pages: PortPage[]): Promise<string[]> {
+    const importBlocks: string[] = [];
+    // to remove duplicates, since page.parent can contain several duplicates
+    const seenParents = new Set<string>();
+
+    pages.forEach((page: PortPage) => {
+        // filter out folders that are null or start with numberal (invalid HCL syntax)
+        if (page.parent && 
+            !/^\d/.test(page.parent) &&
+            !seenParents.has(page.parent)) {
+
+            seenParents.add(page.parent);
+            importBlocks.push(
+                `import {
+        to = port_page.${page.parent}
+        id = "${page.parent}" 
     }`
             );
         }
