@@ -8,7 +8,7 @@ import {
   generatePageImports,
   generateFolderImports,
   writeImportBlocksToFile 
-} from './src/tf_import_block_generator';
+} from './src/tf_import_block_generator.ts';
 
 async function main() {
   const PORT_CLIENT_ID = process.env.PORT_CLIENT_ID;
@@ -33,6 +33,8 @@ async function main() {
     const webhooks = await client.get('/webhooks');
     console.log('fetching pages');
     const pages = await client.get('/pages');
+    console.log('fetching folders');
+    const folders = await client.get('/sidebars/catalog');
 
 
     console.log('generating tf import files');
@@ -42,9 +44,9 @@ async function main() {
     const integrationImports = await generateIntegrationImports(integrations.integrations);
     const webhookImports = await generateWebhookImports(webhooks.integrations);
     const pageImports = await generatePageImports(pages.pages);
-    const folderImports = await generateFolderImports(pages.pages);
+    const folderImports = await generateFolderImports(folders);
 
-    await Promise.all([
+    await Promise.all([ 
         writeImportBlocksToFile(actionImports, 'action_imports.tf'),
         writeImportBlocksToFile(blueprintImports, 'blueprint_imports.tf'),
         writeImportBlocksToFile(scorecardImports, 'scorecard_imports.tf'),
