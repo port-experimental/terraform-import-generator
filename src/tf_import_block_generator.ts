@@ -29,7 +29,11 @@ interface PortWebhook {
 
 interface PortPage {
     identifier: string;
-    parent?: string | null;
+}
+
+interface PortFolder {
+    identifier: string;
+    title: string;
 }
 
 export async function generateActionImports(actions: PortAction[]): Promise<string[]> {
@@ -110,31 +114,6 @@ export async function generatePageImports(pages: PortPage[]): Promise<string[]> 
     return importBlocks;
 }
 
-
-
-export async function generateFolderImports(pages: PortPage[]): Promise<string[]> {
-    const importBlocks: string[] = [];
-    // to remove duplicates, since page.parent can contain several duplicates
-    const seenParents = new Set<string>();
-
-    pages.forEach((page: PortPage) => {
-        // filter out folders that are null or start with digit (invalid HCL syntax)
-        if (page.parent && 
-            !/^\d/.test(page.parent) &&
-            !seenParents.has(page.parent)) {
-
-            seenParents.add(page.parent);
-            importBlocks.push(
-                `import {
-        to = port_folder.${page.parent}
-        id = "${page.parent}" 
-    }`
-            );
-        }
-    });
-    return importBlocks;
-}
-
 export async function generateBlueprintImports(blueprints: PortBlueprint[]): Promise<string[]> {
     const importBlocks: string[] = [];
     
@@ -147,6 +126,27 @@ export async function generateBlueprintImports(blueprints: PortBlueprint[]): Pro
         );
     });
     
+    return importBlocks;
+}
+
+export async function generateFolderImports(sidebarResponse: PortSidebar): Promise<string[]> {
+    const importBlocks: string[] = [];
+
+    sidebarResponse.sidebar.items.forEach((item) => {
+        // skip pages and filter out folder identifiers that start with digit (invalid HCL syntax)
+        if (
+            item.sidebarType === "folder" &&
+            !/^\d/.test(item.identifier)
+        ) {
+            importBlocks.push(
+                `import {
+    to = port_folder.${item.identifier}
+    id = "${item.identifier}" 
+}`
+            );
+        }
+    });
+
     return importBlocks;
 }
 
