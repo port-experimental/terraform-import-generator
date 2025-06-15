@@ -8,7 +8,7 @@ import {
   generatePageImports,
   generateFolderImports,
   writeImportBlocksToFile 
-} from './src/tf_import_block_generator.ts';
+} from './src/tf_import_block_generator';
 
 async function main() {
   const PORT_CLIENT_ID = process.env.PORT_CLIENT_ID;
