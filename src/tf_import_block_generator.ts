@@ -31,6 +31,11 @@ interface PortPage {
     identifier: string;
 }
 
+interface PortFolder {
+    identifier: string;
+    title: string;
+}
+
 export async function generateActionImports(actions: PortAction[]): Promise<string[]> {
     const importBlocks: string[] = [];
     
@@ -121,6 +126,27 @@ export async function generateBlueprintImports(blueprints: PortBlueprint[]): Pro
         );
     });
     
+    return importBlocks;
+}
+
+export async function generateFolderImports(sidebarResponse: PortSidebar): Promise<string[]> {
+    const importBlocks: string[] = [];
+
+    sidebarResponse.sidebar.items.forEach((item) => {
+        // skip pages and filter out folder identifiers that start with digit (invalid HCL syntax)
+        if (
+            item.sidebarType === "folder" &&
+            !/^\d/.test(item.identifier)
+        ) {
+            importBlocks.push(
+                `import {
+    to = port_folder.${item.identifier}
+    id = "${item.identifier}" 
+}`
+            );
+        }
+    });
+
     return importBlocks;
 }
 
