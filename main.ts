@@ -6,6 +6,7 @@ import {
   generateIntegrationImports,
   generateWebhookImports,
   generatePageImports,
+  generateFolderImports,
   generateEntityImports,
   writeImportBlocksToFile 
 } from './src/tf_import_block_generator';
@@ -33,6 +34,8 @@ async function main() {
     const webhooks = await client.get('/webhooks');
     console.log('fetching pages');
     const pages = await client.get('/pages');
+    console.log('fetching folders');
+    const folders = await client.get('/sidebars/catalog');    
     // to import entities add desired blueprint identifiers, e.g. replace [] with ['service', 'jiraIssue']
     const blueprintIdentifiers = [];
 
@@ -55,6 +58,7 @@ async function main() {
     const integrationImports = await generateIntegrationImports(integrations.integrations);
     const webhookImports = await generateWebhookImports(webhooks.integrations);
     const pageImports = await generatePageImports(pages.pages);
+    const folderImports = await generateFolderImports(folders);    
     const entityImports = await generateEntityImports(allEntities);
 
     await Promise.all([
@@ -64,6 +68,7 @@ async function main() {
         writeImportBlocksToFile(integrationImports, 'integration_imports.tf'),
         writeImportBlocksToFile(webhookImports, 'webhook_imports.tf'),
         writeImportBlocksToFile(pageImports, 'page_imports.tf'),
+        writeImportBlocksToFile(folderImports, 'folder_imports.tf'),      
         writeImportBlocksToFile(entityImports, "entities_imports.tf")
     ]);
 
