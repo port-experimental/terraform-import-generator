@@ -36,7 +36,7 @@ async function main() {
     const pages = await client.get('/pages');
     console.log('fetching folders');
     const folders = await client.get('/sidebars/catalog');    
-    // to import entities add desired blueprint identifiers, e.g. replace [] with ['service', 'jiraIssue']
+    // to import entities add desired blueprint identifiers, e.g. replace [] with ['service', 'environments']
     const blueprintIdentifiers = [];
 
     let allEntities: any[] = [];
