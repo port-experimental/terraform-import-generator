@@ -6,7 +6,7 @@ import {
   generateIntegrationImports,
   generateWebhookImports,
   generatePageImports,
-  generateFolderImports,
+  generateEntityImports,
   writeImportBlocksToFile 
 } from './src/tf_import_block_generator';
 
@@ -33,9 +33,20 @@ async function main() {
     const webhooks = await client.get('/webhooks');
     console.log('fetching pages');
     const pages = await client.get('/pages');
-    console.log('fetching folders');
-    const folders = await client.get('/sidebars/catalog');
+    // to import entities add desired blueprint identifiers, e.g. replace [] with ['service', 'jiraIssue']
+    const blueprintIdentifiers = [];
 
+    let allEntities: any[] = [];
+
+    if (blueprintIdentifiers.length > 0) {
+      for (const blueprintId of blueprintIdentifiers) {
+        console.log(`fetching entities for blueprint: ${blueprintId}`);
+        const res = await client.get(`/blueprints/${blueprintId}/entities`);
+        allEntities = allEntities.concat(res.entities);
+      }
+    } else {
+      console.log('No blueprint identifiers provided, skipping entity fetch.');
+    }
 
     console.log('generating tf import files');
     const actionImports = await generateActionImports(actions.actions);
@@ -44,16 +55,16 @@ async function main() {
     const integrationImports = await generateIntegrationImports(integrations.integrations);
     const webhookImports = await generateWebhookImports(webhooks.integrations);
     const pageImports = await generatePageImports(pages.pages);
-    const folderImports = await generateFolderImports(folders);
+    const entityImports = await generateEntityImports(allEntities);
 
-    await Promise.all([ 
+    await Promise.all([
         writeImportBlocksToFile(actionImports, 'action_imports.tf'),
         writeImportBlocksToFile(blueprintImports, 'blueprint_imports.tf'),
         writeImportBlocksToFile(scorecardImports, 'scorecard_imports.tf'),
         writeImportBlocksToFile(integrationImports, 'integration_imports.tf'),
         writeImportBlocksToFile(webhookImports, 'webhook_imports.tf'),
         writeImportBlocksToFile(pageImports, 'page_imports.tf'),
-        writeImportBlocksToFile(folderImports, 'folder_imports.tf')
+        writeImportBlocksToFile(entityImports, "entities_imports.tf")
     ]);
 
   } catch (error) {
