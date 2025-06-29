@@ -9,15 +9,18 @@ export PORT_CLIENT_SECRET=<your_client_secret>
 export PORT_BETA_FEATURES_ENABLED=true # this is required if you want to export pages
 ```
 
-2. Install deps
+2. Install dependencies, install CLI
 ```
-yarn install
+npm install
+npm run build
+npm link
+
 ```
 
-3. Run the tool - bun is really easy and fast, and you don't need to mess around with transpiling any typescript. If you use devenv, just write `devenv shell` first
+3. Run CLI
 
 ```
-bun run main.ts
+port-tf-import
 ```
 
 4. You now have all the import statements in `*.tf` - take a look

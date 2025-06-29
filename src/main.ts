@@ -1,4 +1,6 @@
-import { getClient } from './src/port_client';
+#!/usr/bin/env node
+
+import { getClient } from './port_client';
 import { 
   generateActionImports, 
   generateBlueprintImports, 
@@ -9,7 +11,7 @@ import {
   generateFolderImports,
   generateAggregationPropertyImports,
   writeImportBlocksToFile,
-} from './src/tf_import_block_generator';
+} from './tf_import_block_generator';
 
 async function main() {
   const PORT_CLIENT_ID = process.env.PORT_CLIENT_ID;

@@ -1,4 +1,10 @@
 {
+  "name": "port-tf-import",
+  "version": "1.0.0",
+  "main": "dist/main.js",
+  "bin": {
+    "port-tf-import": "./dist/main.js"
+  },
   "dependencies": {
     "axios": "^1.7.9",
     "commander": "^12.1.0",
