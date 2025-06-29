@@ -115,6 +115,7 @@ devenv.local.nix
 .pre-commit-config.yaml
 
 *.json
+!tsconfig.json
 *.tsv
 !package.json
 *.tf

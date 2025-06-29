@@ -7,7 +7,8 @@ import {
   generateWebhookImports,
   generatePageImports,
   generateFolderImports,
-  writeImportBlocksToFile 
+  generateAggregationPropertyImports,
+  writeImportBlocksToFile,
 } from './src/tf_import_block_generator';
 
 async function main() {
@@ -40,6 +41,7 @@ async function main() {
     console.log('generating tf import files');
     const actionImports = await generateActionImports(actions.actions);
     const blueprintImports = await generateBlueprintImports(blueprints.blueprints);
+    const aggregationPropertyImports = await generateAggregationPropertyImports(blueprints.blueprints);
     const scorecardImports = await generateScorecardImports(scorecards.scorecards);
     const integrationImports = await generateIntegrationImports(integrations.integrations);
     const webhookImports = await generateWebhookImports(webhooks.integrations);
@@ -49,6 +51,7 @@ async function main() {
     await Promise.all([ 
         writeImportBlocksToFile(actionImports, 'action_imports.tf'),
         writeImportBlocksToFile(blueprintImports, 'blueprint_imports.tf'),
+        writeImportBlocksToFile(aggregationPropertyImports, 'aggregation_property_imports.tf'),
         writeImportBlocksToFile(scorecardImports, 'scorecard_imports.tf'),
         writeImportBlocksToFile(integrationImports, 'integration_imports.tf'),
         writeImportBlocksToFile(webhookImports, 'webhook_imports.tf'),
