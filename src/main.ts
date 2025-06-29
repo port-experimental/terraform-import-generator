@@ -1,4 +1,6 @@
-import { getClient } from './src/port_client';
+#!/usr/bin/env node
+
+import { getClient } from './port_client';
 import { 
   generateActionImports, 
   generateBlueprintImports, 
@@ -7,8 +9,9 @@ import {
   generateWebhookImports,
   generatePageImports,
   generateFolderImports,
-  writeImportBlocksToFile 
-} from './src/tf_import_block_generator';
+  generateAggregationPropertyImports,
+  writeImportBlocksToFile,
+} from './tf_import_block_generator';
 
 async function main() {
   const PORT_CLIENT_ID = process.env.PORT_CLIENT_ID;
@@ -40,6 +43,7 @@ async function main() {
     console.log('generating tf import files');
     const actionImports = await generateActionImports(actions.actions);
     const blueprintImports = await generateBlueprintImports(blueprints.blueprints);
+    const aggregationPropertyImports = await generateAggregationPropertyImports(blueprints.blueprints);
     const scorecardImports = await generateScorecardImports(scorecards.scorecards);
     const integrationImports = await generateIntegrationImports(integrations.integrations);
     const webhookImports = await generateWebhookImports(webhooks.integrations);
@@ -49,6 +53,7 @@ async function main() {
     await Promise.all([ 
         writeImportBlocksToFile(actionImports, 'action_imports.tf'),
         writeImportBlocksToFile(blueprintImports, 'blueprint_imports.tf'),
+        writeImportBlocksToFile(aggregationPropertyImports, 'aggregation_property_imports.tf'),
         writeImportBlocksToFile(scorecardImports, 'scorecard_imports.tf'),
         writeImportBlocksToFile(integrationImports, 'integration_imports.tf'),
         writeImportBlocksToFile(webhookImports, 'webhook_imports.tf'),

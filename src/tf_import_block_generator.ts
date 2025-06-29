@@ -1,11 +1,15 @@
-import { AxiosResponse } from 'axios';
-
 interface PortAction {
     identifier: string;
     title: string;
 }
 
 interface PortBlueprint {
+    identifier: string;
+    title: string;
+    aggregationProperties: PortAggregationProperty[];
+}
+
+interface PortAggregationProperty {
     identifier: string;
     title: string;
 }
@@ -31,9 +35,17 @@ interface PortPage {
     identifier: string;
 }
 
-interface PortFolder {
+interface PortSidebarResponse {
+    sidebar: PortSidebar;
+}
+
+interface PortSidebar {
+    items: PortSidebarItem[];
+}
+
+interface PortSidebarItem {
     identifier: string;
-    title: string;
+    sidebarType: string;
 }
 
 export async function generateActionImports(actions: PortAction[]): Promise<string[]> {
@@ -129,10 +141,26 @@ export async function generateBlueprintImports(blueprints: PortBlueprint[]): Pro
     return importBlocks;
 }
 
-export async function generateFolderImports(sidebarResponse: PortSidebar): Promise<string[]> {
+export async function generateAggregationPropertyImports(blueprints: PortBlueprint[]): Promise<string[]> {
+    const importBlocks: string[] = [];
+    blueprints.forEach((blueprint: PortBlueprint) => {
+        if (Object.entries(blueprint.aggregationProperties).length > 0) {
+            importBlocks.push(
+                `import {
+                    to = port_aggregation_properties.${blueprint.identifier}_aggregation_properties
+                    id = "${blueprint.identifier}"
+                }`
+            );
+        }
+    });
+
+    return importBlocks;
+}
+
+export async function generateFolderImports(sidebarResponse: PortSidebarResponse): Promise<string[]> {
     const importBlocks: string[] = [];
 
-    sidebarResponse.sidebar.items.forEach((item) => {
+    sidebarResponse.sidebar.items.forEach((item: PortSidebarItem) => {
         // skip pages and filter out folder identifiers that start with digit (invalid HCL syntax)
         if (
             item.sidebarType === "folder" &&
