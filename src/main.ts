@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { Command } from 'commander';
 import { getClient } from './port_client';
 import { 
   generateActionImports, 
@@ -14,11 +15,18 @@ import {
   writeImportBlocksToFile,
 } from './tf_import_block_generator';
 
+const program = new Command();
+
+program
+  .name('port-tf-import')
+  .description('Generate Terraform import blocks for Port entities')
+  .option('-b, --export-entities-for-blueprints <ids>', 'Comma-separated list of blueprint IDs to fetch entities for', (val) => val.split(',').map(bp => bp.trim()).filter(Boolean))
+  .parse(process.argv);
+
+const options = program.opts();
+
 async function main() {
-  const blueprintArg = process.argv.find(arg => arg.startsWith('--blueprints='));
-  const blueprintIdentifiers = blueprintArg
-    ? blueprintArg.replace('--blueprints=', '').split(',').map(bp => bp.trim()).filter(Boolean)
-    : [];  
+  const blueprintIdentifiers: string[] = options.exportEntitiesForBlueprints || [];
   const PORT_CLIENT_ID = process.env.PORT_CLIENT_ID;
   const PORT_CLIENT_SECRET = process.env.PORT_CLIENT_SECRET;
 
@@ -43,11 +51,6 @@ async function main() {
     const pages = await client.get('/pages');
     console.log('fetching folders');
     const folders = await client.get('/sidebars/catalog');
-    
-    const blueprintArg = process.argv.find(arg => arg.startsWith('--blueprints='));
-    const blueprintIdentifiers = blueprintArg
-      ? blueprintArg.replace('--blueprints=', '').split(',').map(bp => bp.trim()).filter(Boolean)
-      : [];
 
     let allEntities: any[] = [];
 
@@ -69,10 +72,7 @@ async function main() {
           }
         }
       }
-    } else {
-      console.log('No blueprint identifiers provided, skipping entity fetch. Use command line arg --blueprints=blueprint1,blueprint2,... to specify blueprints.');
     }
-
 
     console.log('generating tf import files');
     const actionImports = await generateActionImports(actions.actions);

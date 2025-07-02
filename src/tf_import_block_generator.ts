@@ -54,6 +54,8 @@ interface PortEntities {
     blueprint: string;
 }
 
+const cleanIdentifier = (identifier: string) => identifier.replace(/^\./g, 'dot');
+
 export async function generateActionImports(actions: PortAction[]): Promise<string[]> {
     const importBlocks: string[] = [];
     
@@ -190,7 +192,7 @@ export async function generateEntityImports(entities: PortEntities[]): Promise<s
     entities.forEach((entity: PortEntities) => {
         importBlocks.push(
             `import {
-  to = port_entity.${entity.identifier}
+  to = port_entity.${cleanIdentifier(entity.identifier)}
   id = "${entity.blueprint}:${entity.identifier}"
 }`
         );
