@@ -9,6 +9,7 @@ import {
   generateWebhookImports,
   generatePageImports,
   generateFolderImports,
+  generateEntityImports,
   generateAggregationPropertyImports,
   writeImportBlocksToFile,
 } from './tf_import_block_generator';
@@ -38,7 +39,35 @@ async function main() {
     const pages = await client.get('/pages');
     console.log('fetching folders');
     const folders = await client.get('/sidebars/catalog');
+    
+    const blueprintArg = process.argv.find(arg => arg.startsWith('--blueprints='));
+    const blueprintIdentifiers = blueprintArg
+      ? blueprintArg.replace('--blueprints=', '').split(',').map(bp => bp.trim()).filter(Boolean)
+      : [];
+    
+    if (blueprintIdentifiers.length === 0) {
+      console.log('No blueprint identifiers provided, skipping entity fetch.');
+    }
 
+    let allEntities: any[] = [];
+
+    if (blueprintIdentifiers.length > 0) {
+      for (const blueprintId of blueprintIdentifiers) {
+        console.log(`fetching entities for blueprint: ${blueprintId}`);
+      try {
+        const res = await client.get(`/blueprints/${blueprintId}/entities`);
+        if (Array.isArray(res.entities)) {
+          allEntities = allEntities.concat(res.entities);
+        } else {
+          console.warn(`No valid entities array returned for blueprint: ${blueprintId}`);
+        }
+      } catch (err) {
+        console.error(`Failed to fetch entities for blueprint "${blueprintId}":`, err.message || err);
+      }
+      }
+    } else {
+      console.log('No blueprint identifiers provided, skipping entity fetch.');
+    }
 
     console.log('generating tf import files');
     const actionImports = await generateActionImports(actions.actions);
@@ -49,6 +78,7 @@ async function main() {
     const webhookImports = await generateWebhookImports(webhooks.integrations);
     const pageImports = await generatePageImports(pages.pages);
     const folderImports = await generateFolderImports(folders);
+    const entityImports = await generateEntityImports(allEntities);
 
     await Promise.all([ 
         writeImportBlocksToFile(actionImports, 'action_imports.tf'),
@@ -58,7 +88,8 @@ async function main() {
         writeImportBlocksToFile(integrationImports, 'integration_imports.tf'),
         writeImportBlocksToFile(webhookImports, 'webhook_imports.tf'),
         writeImportBlocksToFile(pageImports, 'page_imports.tf'),
-        writeImportBlocksToFile(folderImports, 'folder_imports.tf')
+        writeImportBlocksToFile(folderImports, 'folder_imports.tf'),
+        writeImportBlocksToFile(entityImports, 'entities_imports.tf')
     ]);
 
   } catch (error) {
