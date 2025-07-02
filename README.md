@@ -22,6 +22,21 @@ npm link
 ```
 port-tf-import
 ```
+By default the following import files will be generated:
+- webhook_imports.tf
+- action_imports.tf
+- blueprint_imports.tf
+- scorecard_imports.tf
+- integration_imports.tf
+- page_imports.tf
+- folder_imports.tf
+- aggregation_property_imports.tf
+
+If you want to fetch entities for specific blueprints, specify them via command line argument:
+```
+port-tf-import --export-entities-for-blueprints blueprint1,blueprint2
+port-tf-import -b blueprint1,blueprint2
+```
 
 4. You now have all the import statements in `*.tf` - take a look
 

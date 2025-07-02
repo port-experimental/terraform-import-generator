@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { Command } from 'commander';
 import { getClient } from './port_client';
 import { 
   generateActionImports, 
@@ -9,11 +10,23 @@ import {
   generateWebhookImports,
   generatePageImports,
   generateFolderImports,
+  generateEntityImports,
   generateAggregationPropertyImports,
   writeImportBlocksToFile,
 } from './tf_import_block_generator';
 
+const program = new Command();
+
+program
+  .name('port-tf-import')
+  .description('Generate Terraform import blocks for Port entities')
+  .option('-b, --export-entities-for-blueprints <ids>', 'Comma-separated list of blueprint IDs to fetch entities for', (val) => val.split(',').map(bp => bp.trim()).filter(Boolean))
+  .parse(process.argv);
+
+const options = program.opts();
+
 async function main() {
+  const blueprintIdentifiers: string[] = options.exportEntitiesForBlueprints || [];
   const PORT_CLIENT_ID = process.env.PORT_CLIENT_ID;
   const PORT_CLIENT_SECRET = process.env.PORT_CLIENT_SECRET;
 
@@ -39,6 +52,27 @@ async function main() {
     console.log('fetching folders');
     const folders = await client.get('/sidebars/catalog');
 
+    let allEntities: any[] = [];
+
+    if (blueprintIdentifiers.length > 0) {
+      for (const blueprintId of blueprintIdentifiers) {
+        console.log(`fetching entities for blueprint: ${blueprintId}`);
+        try {
+          const res = await client.get(`/blueprints/${blueprintId}/entities`);
+          if (Array.isArray(res.entities)) {
+            allEntities = allEntities.concat(res.entities);
+          } else {
+            console.warn(`No valid entities array returned for blueprint: ${blueprintId}`);
+          }
+        } catch (err) {
+          if (err instanceof Error) {
+            console.error(`Failed to fetch entities for blueprint "${blueprintId}":`, err.message);
+          } else {
+            console.error(`Failed to fetch entities for blueprint "${blueprintId}":`, err);
+          }
+        }
+      }
+    }
 
     console.log('generating tf import files');
     const actionImports = await generateActionImports(actions.actions);
@@ -49,6 +83,7 @@ async function main() {
     const webhookImports = await generateWebhookImports(webhooks.integrations);
     const pageImports = await generatePageImports(pages.pages);
     const folderImports = await generateFolderImports(folders);
+    const entityImports = await generateEntityImports(allEntities);
 
     await Promise.all([ 
         writeImportBlocksToFile(actionImports, 'action_imports.tf'),
@@ -58,7 +93,8 @@ async function main() {
         writeImportBlocksToFile(integrationImports, 'integration_imports.tf'),
         writeImportBlocksToFile(webhookImports, 'webhook_imports.tf'),
         writeImportBlocksToFile(pageImports, 'page_imports.tf'),
-        writeImportBlocksToFile(folderImports, 'folder_imports.tf')
+        writeImportBlocksToFile(folderImports, 'folder_imports.tf'),
+        writeImportBlocksToFile(entityImports, 'entities_imports.tf')
     ]);
 
   } catch (error) {
