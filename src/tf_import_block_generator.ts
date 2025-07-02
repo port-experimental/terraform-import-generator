@@ -33,6 +33,7 @@ interface PortWebhook {
 
 interface PortPage {
     identifier: string;
+    type: string;
 }
 
 interface PortSidebarResponse {
@@ -121,8 +122,8 @@ export async function generateWebhookImports(webhooks: PortWebhook[]): Promise<s
 export async function generatePageImports(pages: PortPage[]): Promise<string[]> {
     const importBlocks: string[] = [];
     pages.forEach((page: PortPage) => {
-        // Skip pages for system blueprints, or system features
-        if (!page.identifier.startsWith('$') && !page.identifier.startsWith('_')) {
+        // Skip pages for system blueprints, or system features, or entity pages (not supported)
+        if (!page.identifier.startsWith('$') && !page.identifier.startsWith('_') && page.type !== 'entity') {
             importBlocks.push(
                 `import {
         to = port_page.${page.identifier}
