@@ -15,6 +15,10 @@ import {
 } from './tf_import_block_generator';
 
 async function main() {
+  const blueprintArg = process.argv.find(arg => arg.startsWith('--blueprints='));
+  const blueprintIdentifiers = blueprintArg
+    ? blueprintArg.replace('--blueprints=', '').split(',').map(bp => bp.trim()).filter(Boolean)
+    : [];  
   const PORT_CLIENT_ID = process.env.PORT_CLIENT_ID;
   const PORT_CLIENT_SECRET = process.env.PORT_CLIENT_SECRET;
 
@@ -44,34 +48,31 @@ async function main() {
     const blueprintIdentifiers = blueprintArg
       ? blueprintArg.replace('--blueprints=', '').split(',').map(bp => bp.trim()).filter(Boolean)
       : [];
-    
-    if (blueprintIdentifiers.length === 0) {
-      console.log('No blueprint identifiers provided, skipping entity fetch.');
-    }
 
     let allEntities: any[] = [];
 
     if (blueprintIdentifiers.length > 0) {
       for (const blueprintId of blueprintIdentifiers) {
         console.log(`fetching entities for blueprint: ${blueprintId}`);
-      try {
-        const res = await client.get(`/blueprints/${blueprintId}/entities`);
-        if (Array.isArray(res.entities)) {
-          allEntities = allEntities.concat(res.entities);
-        } else {
-          console.warn(`No valid entities array returned for blueprint: ${blueprintId}`);
+        try {
+          const res = await client.get(`/blueprints/${blueprintId}/entities`);
+          if (Array.isArray(res.entities)) {
+            allEntities = allEntities.concat(res.entities);
+          } else {
+            console.warn(`No valid entities array returned for blueprint: ${blueprintId}`);
+          }
+        } catch (err) {
+          if (err instanceof Error) {
+            console.error(`Failed to fetch entities for blueprint "${blueprintId}":`, err.message);
+          } else {
+            console.error(`Failed to fetch entities for blueprint "${blueprintId}":`, err);
+          }
         }
-      } catch (err) {
-        if (err instanceof Error) {
-          console.error(`Failed to fetch entities for blueprint "${blueprintId}":`, err.message);
-        } else {
-          console.error(`Failed to fetch entities for blueprint "${blueprintId}":`, err);
-        }
-      }
       }
     } else {
-      console.log('No blueprint identifiers provided, skipping entity fetch.');
+      console.log('No blueprint identifiers provided, skipping entity fetch. Use command line arg --blueprints=blueprint1,blueprint2,... to specify blueprints.');
     }
+
 
     console.log('generating tf import files');
     const actionImports = await generateActionImports(actions.actions);
