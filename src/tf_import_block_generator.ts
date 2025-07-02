@@ -48,6 +48,12 @@ interface PortSidebarItem {
     sidebarType: string;
 }
 
+interface PortEntities {
+    identifier: string;
+    title: string;
+    blueprint: string;
+}
+
 export async function generateActionImports(actions: PortAction[]): Promise<string[]> {
     const importBlocks: string[] = [];
     
@@ -173,6 +179,21 @@ export async function generateFolderImports(sidebarResponse: PortSidebarResponse
 }`
             );
         }
+    });
+
+    return importBlocks;
+}
+
+export async function generateEntityImports(entities: PortEntities[]): Promise<string[]> {
+    const importBlocks: string[] = [];
+    // console.log(`Generating entity imports for ${entities} entities`);
+    entities.forEach((entity: PortEntities) => {
+        importBlocks.push(
+            `import {
+  to = port_entity.${entity.identifier}
+  id = "${entity.blueprint}:${entity.identifier}"
+}`
+        );
     });
 
     return importBlocks;

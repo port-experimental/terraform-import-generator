@@ -62,7 +62,11 @@ async function main() {
           console.warn(`No valid entities array returned for blueprint: ${blueprintId}`);
         }
       } catch (err) {
-        console.error(`Failed to fetch entities for blueprint "${blueprintId}":`, err.message || err);
+        if (err instanceof Error) {
+          console.error(`Failed to fetch entities for blueprint "${blueprintId}":`, err.message);
+        } else {
+          console.error(`Failed to fetch entities for blueprint "${blueprintId}":`, err);
+        }
       }
       }
     } else {
