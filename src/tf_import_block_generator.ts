@@ -64,7 +64,8 @@ export async function generateActionImports(actions: PortAction[]): Promise<stri
         importBlocks.push(
             `import {
   to = port_action.${action.identifier}
-  id = "${action.identifier}" 
+  id = "${action.identifier}"
+  provider = port-labs
 }`
         );
     });
@@ -80,7 +81,8 @@ export async function generateScorecardImports(scorecards: PortScorecard[]): Pro
         importBlocks.push(
             `import {
   to = port_scorecard.${scorecard.identifier}
-  id = "${scorecard.blueprint}:${scorecard.identifier}" 
+  id = "${scorecard.blueprint}:${scorecard.identifier}"
+  provider = port-labs
 }`
         );
     });
@@ -96,7 +98,8 @@ export async function generateIntegrationImports(integrations: PortIntegration[]
         importBlocks.push(
             `import {
   to = port_integration.${ensureValidResourceName(integration.identifier, integration.integrationType)}
-  id = "${integration.identifier}" 
+  id = "${integration.identifier}"
+  provider = port-labs
 }`
         );
     });
@@ -111,7 +114,8 @@ export async function generateWebhookImports(webhooks: PortWebhook[]): Promise<s
         importBlocks.push(
             `import {
   to = port_webhook.${webhook.identifier}
-  id = "${webhook.identifier}" 
+  id = "${webhook.identifier}"
+  provider = port-labs
 }`
         );
     });
@@ -127,7 +131,8 @@ export async function generatePageImports(pages: PortPage[]): Promise<string[]> 
             importBlocks.push(
                 `import {
         to = port_page.${page.identifier}
-        id = "${page.identifier}" 
+        id = "${page.identifier}"
+        provider = port-labs
     }`
             );
         }
@@ -143,6 +148,7 @@ export async function generateBlueprintImports(blueprints: PortBlueprint[]): Pro
             `import {
   to = port_blueprint.${blueprint.identifier}
   id = "${blueprint.identifier}"
+  provider = port-labs
 }`
         );
     });
@@ -158,6 +164,7 @@ export async function generateAggregationPropertyImports(blueprints: PortBluepri
                 `import {
                     to = port_aggregation_properties.${blueprint.identifier}_aggregation_properties
                     id = "${blueprint.identifier}"
+                    provider = port-labs
                 }`
             );
         }
@@ -178,7 +185,8 @@ export async function generateFolderImports(sidebarResponse: PortSidebarResponse
             importBlocks.push(
                 `import {
     to = port_folder.${item.identifier}
-    id = "${item.identifier}" 
+    id = "${item.identifier}"
+    provider = port-labs
 }`
             );
         }
@@ -195,6 +203,7 @@ export async function generateEntityImports(entities: PortEntities[]): Promise<s
             `import {
   to = port_entity.${cleanIdentifier(entity.identifier)}
   id = "${entity.blueprint}:${entity.identifier}"
+  provider = port-labs
 }`
         );
     });
