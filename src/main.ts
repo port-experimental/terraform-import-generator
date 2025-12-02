@@ -56,6 +56,10 @@ async function main() {
 
     if (blueprintIdentifiers.length > 0) {
       for (const blueprintId of blueprintIdentifiers) {
+        if (blueprintId.startsWith('_')) {
+          console.log(`Skipping system blueprint "${blueprintId}" - system blueprints are handled separately`);
+          continue;
+        }
         console.log(`fetching entities for blueprint: ${blueprintId}`);
         try {
           const res = await client.get(`/blueprints/${blueprintId}/entities`);

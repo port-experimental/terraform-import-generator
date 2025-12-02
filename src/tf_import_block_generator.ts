@@ -57,6 +57,11 @@ interface PortEntities {
 
 const cleanIdentifier = (identifier: string) => identifier.replace(/^\./g, 'dot');
 
+// Helper function to check if a blueprint is a system blueprint
+const isSystemBlueprint = (identifier: string): boolean => {
+    return identifier.startsWith('_');
+};
+
 export async function generateActionImports(actions: PortAction[]): Promise<string[]> {
     const importBlocks: string[] = [];
     
@@ -78,13 +83,24 @@ export async function generateScorecardImports(scorecards: PortScorecard[]): Pro
     const importBlocks: string[] = [];
     
     scorecards.forEach((scorecard: PortScorecard) => {
-        importBlocks.push(
-            `import {
+        // Check if the scorecard belongs to a system blueprint
+        if (isSystemBlueprint(scorecard.blueprint)) {
+            importBlocks.push(
+                `import {
+  to = port_system_blueprint.${scorecard.blueprint}
+  id = "${scorecard.blueprint}"
+  provider = port-labs
+}`
+            );
+        } else {
+            importBlocks.push(
+                `import {
   to = port_scorecard.${scorecard.identifier}
   id = "${scorecard.blueprint}:${scorecard.identifier}"
   provider = port-labs
 }`
-        );
+            );
+        }
     });
     
     return importBlocks;
@@ -144,13 +160,23 @@ export async function generateBlueprintImports(blueprints: PortBlueprint[]): Pro
     const importBlocks: string[] = [];
     
     blueprints.forEach((blueprint: PortBlueprint) => {
-        importBlocks.push(
-            `import {
+        if (isSystemBlueprint(blueprint.identifier)) {
+            importBlocks.push(
+                `import {
+  to = port_system_blueprint.${blueprint.identifier}
+  id = "${blueprint.identifier}"
+  provider = port-labs
+}`
+            );
+        } else {
+            importBlocks.push(
+                `import {
   to = port_blueprint.${blueprint.identifier}
   id = "${blueprint.identifier}"
   provider = port-labs
 }`
-        );
+            );
+        }
     });
     
     return importBlocks;
@@ -160,13 +186,23 @@ export async function generateAggregationPropertyImports(blueprints: PortBluepri
     const importBlocks: string[] = [];
     blueprints.forEach((blueprint: PortBlueprint) => {
         if (Object.entries(blueprint.aggregationProperties).length > 0) {
-            importBlocks.push(
-                `import {
+            if (isSystemBlueprint(blueprint.identifier)) {
+                importBlocks.push(
+                    `import {
+                    to = port_system_blueprint.${blueprint.identifier}
+                    id = "${blueprint.identifier}"
+                    provider = port-labs
+                }`
+                );
+            } else {
+                importBlocks.push(
+                    `import {
                     to = port_aggregation_properties.${blueprint.identifier}_aggregation_properties
                     id = "${blueprint.identifier}"
                     provider = port-labs
                 }`
-            );
+                );
+            }
         }
     });
 
@@ -197,15 +233,29 @@ export async function generateFolderImports(sidebarResponse: PortSidebarResponse
 
 export async function generateEntityImports(entities: PortEntities[]): Promise<string[]> {
     const importBlocks: string[] = [];
+    const systemBlueprintsImported = new Set<string>();
     // console.log(`Generating entity imports for ${entities} entities`);
     entities.forEach((entity: PortEntities) => {
-        importBlocks.push(
-            `import {
-  to = port_entity.${cleanIdentifier(entity.identifier)}
-  id = "${entity.blueprint}:${entity.identifier}"
-  provider = port-labs
-}`
-        );
+        if (isSystemBlueprint(entity.blueprint)) {
+            if (!systemBlueprintsImported.has(entity.blueprint)) {
+                systemBlueprintsImported.add(entity.blueprint);
+                importBlocks.push(
+                    `import {
+                    to = port_system_blueprint.${entity.blueprint}
+                    id = "${entity.blueprint}"
+                    provider = port-labs
+                    }`
+                );
+            }
+        } else {
+            importBlocks.push(
+                `import {
+                to = port_entity.${cleanIdentifier(entity.identifier)}
+                id = "${entity.blueprint}:${entity.identifier}"
+                provider = port-labs
+                }`
+            );
+        }
     });
 
     return importBlocks;
