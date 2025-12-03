@@ -6,17 +6,33 @@ interface OAuthResponse {
     accessToken: string;
 }
 
+function getPortApiBaseUrl(): string {
+    const baseUrl = process.env.PORT_API_BASE_URL;
+    
+    if (!baseUrl) {
+        throw new Error('PORT_API_BASE_URL must be set in the environment variables');
+    }
+    
+    const cleanUrl = baseUrl.replace(/^https?:\/\//, '');
+    return cleanUrl;
+}
+
+function getPortApiUrl(): string {
+    return `https://${getPortApiBaseUrl()}/v1`;
+}
+
 async function generateOAuthToken(): Promise<string> {
     const clientId = process.env.PORT_CLIENT_ID;
     const clientSecret = process.env.PORT_CLIENT_SECRET;
     
     if (!clientId || !clientSecret) {
-        throw new Error('CLIENT_ID and CLIENT_SECRET must be set in the environment variables');
+        throw new Error('PORT_CLIENT_ID and PORT_CLIENT_SECRET must be set in the environment variables');
     }
     
     try {
+        const apiUrl = getPortApiUrl();
         const response = await axios.post<OAuthResponse>(
-            "https://api.getport.io/v1/auth/access_token", {
+            `${apiUrl}/auth/access_token`, {
                 clientId,
                 clientSecret,
             });
@@ -40,7 +56,8 @@ class ApiClient {
     static async getClient() {
         let bearerToken: string = process.env.PORT_BEARER_TOKEN || await generateOAuthToken();
         if (!this.instance) {
-            this.instance = new ApiClient('https://api.getport.io/v1', bearerToken);
+            const apiUrl = getPortApiUrl();
+            this.instance = new ApiClient(apiUrl, bearerToken);
         }
         return this.instance;
     }
