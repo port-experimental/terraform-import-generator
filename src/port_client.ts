@@ -13,7 +13,8 @@ function getPortApiBaseUrl(): string {
         throw new Error('PORT_API_BASE_URL must be set in the environment variables');
     }
     
-    const cleanUrl = baseUrl.replace(/^https?:\/\//, '');
+    let cleanUrl = baseUrl.replace(/^https?:\/\//, '');
+    cleanUrl = cleanUrl.split('/')[0];
     return cleanUrl;
 }
 
