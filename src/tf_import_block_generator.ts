@@ -105,7 +105,10 @@ export async function generateScorecardImports(scorecards: PortScorecard[]): Pro
     
     return importBlocks;
 }
-const ensureValidResourceName = (id: string, integrationType: string) => !isNaN(Number(id)) || !/[a-zA-Z]/.test(id) || /^\{/.test(id) ? `${integrationType}-${id.replace(/[{}]/g, '')}` : id;
+const ensureValidResourceName = (id: string, integrationType: string) => {
+    const trimmedId = id.trim();
+    return !isNaN(Number(trimmedId)) || !/[a-zA-Z]/.test(trimmedId) || /^\{/.test(trimmedId) ? `${integrationType}-${trimmedId.replace(/[{}]/g, '')}` : trimmedId;
+};
 
 export async function generateIntegrationImports(integrations: PortIntegration[]): Promise<string[]> {
     const importBlocks: string[] = [];
