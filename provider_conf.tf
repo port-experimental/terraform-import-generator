@@ -2,7 +2,7 @@ terraform {
   required_providers {
     port-labs = {
       source = "port-labs/port-labs"
-      version = ">= 2.1.3"
+      version = ">= 2.14.0"
     }
   }
 }
