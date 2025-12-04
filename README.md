@@ -38,6 +38,39 @@ port-tf-import --export-entities-for-blueprints blueprint1,blueprint2
 port-tf-import -b blueprint1,blueprint2
 ```
 
+### Configuring Provider Alias
+
+By default, the generated import blocks use `port-labs` as the provider alias. You can configure this using:
+
+**CLI option:**
+```
+port-tf-import -p port
+port-tf-import --provider-alias port
+```
+
+**Environment variable:**
+```
+export PORT_PROVIDER_ALIAS=port
+port-tf-import
+```
+
+**Precedence:** CLI option > environment variable > default (`port-labs`)
+
+This is useful when your Terraform configuration uses a different provider alias, for example:
+```hcl
+terraform {
+  required_providers {
+    port = {
+      source  = "port-labs/port-labs"
+      version = "2.14.4"
+    }
+  }
+}
+
+provider "port" {
+}
+```
+
 4. You now have all the import statements in `*.tf` - take a look
 
 ```
@@ -59,7 +92,7 @@ terraform plan -generate-config-out=generated.tf
 
 ```
 resource "port_blueprint" "repository" {
-  provider = port-labs
+  provider = port  # or port-labs, depending on your configuration
   depends_on = [port_blueprint.service]
   ...
   relations = {
@@ -72,7 +105,7 @@ resource "port_blueprint" "repository" {
     }
   ...
   }
-}
+```
 
 resource "port_blueprint" "service" {
   ...
