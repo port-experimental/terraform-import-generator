@@ -21,12 +21,14 @@ program
   .name('port-tf-import')
   .description('Generate Terraform import blocks for Port entities')
   .option('-b, --export-entities-for-blueprints <ids>', 'Comma-separated list of blueprint IDs to fetch entities for', (val) => val.split(',').map(bp => bp.trim()).filter(Boolean))
+  .option('-p, --provider-alias <alias>', 'Terraform provider alias to use in import blocks (default: port-labs, can also be set via PORT_PROVIDER_ALIAS env var)')
   .parse(process.argv);
 
 const options = program.opts();
 
 async function main() {
   const blueprintIdentifiers: string[] = options.exportEntitiesForBlueprints || [];
+  const providerAlias = options.providerAlias || process.env.PORT_PROVIDER_ALIAS || 'port-labs';
   const PORT_CLIENT_ID = process.env.PORT_CLIENT_ID;
   const PORT_CLIENT_SECRET = process.env.PORT_CLIENT_SECRET;
 
@@ -79,15 +81,15 @@ async function main() {
     }
 
     console.log('generating tf import files');
-    const actionImports = await generateActionImports(actions.actions);
-    const blueprintImports = await generateBlueprintImports(blueprints.blueprints);
-    const aggregationPropertyImports = await generateAggregationPropertyImports(blueprints.blueprints);
-    const scorecardImports = await generateScorecardImports(scorecards.scorecards);
-    const integrationImports = await generateIntegrationImports(integrations.integrations);
-    const webhookImports = await generateWebhookImports(webhooks.integrations);
-    const pageImports = await generatePageImports(pages.pages);
-    const folderImports = await generateFolderImports(folders);
-    const entityImports = await generateEntityImports(allEntities);
+    const actionImports = await generateActionImports(actions.actions, providerAlias);
+    const blueprintImports = await generateBlueprintImports(blueprints.blueprints, providerAlias);
+    const aggregationPropertyImports = await generateAggregationPropertyImports(blueprints.blueprints, providerAlias);
+    const scorecardImports = await generateScorecardImports(scorecards.scorecards, providerAlias);
+    const integrationImports = await generateIntegrationImports(integrations.integrations, providerAlias);
+    const webhookImports = await generateWebhookImports(webhooks.integrations, providerAlias);
+    const pageImports = await generatePageImports(pages.pages, providerAlias);
+    const folderImports = await generateFolderImports(folders, providerAlias);
+    const entityImports = await generateEntityImports(allEntities, providerAlias);
 
     await Promise.all([ 
         writeImportBlocksToFile(actionImports, 'action_imports.tf'),

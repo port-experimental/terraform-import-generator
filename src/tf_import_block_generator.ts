@@ -62,7 +62,7 @@ const isSystemBlueprint = (identifier: string): boolean => {
     return identifier.startsWith('_');
 };
 
-export async function generateActionImports(actions: PortAction[]): Promise<string[]> {
+export async function generateActionImports(actions: PortAction[], providerAlias: string = 'port-labs'): Promise<string[]> {
     const importBlocks: string[] = [];
     
     actions.forEach((action: PortAction) => {
@@ -70,7 +70,7 @@ export async function generateActionImports(actions: PortAction[]): Promise<stri
             `import {
   to = port_action.${action.identifier}
   id = "${action.identifier}"
-  provider = port-labs
+  provider = ${providerAlias}
 }`
         );
     });
@@ -79,7 +79,7 @@ export async function generateActionImports(actions: PortAction[]): Promise<stri
 }
 
 
-export async function generateScorecardImports(scorecards: PortScorecard[]): Promise<string[]> {
+export async function generateScorecardImports(scorecards: PortScorecard[], providerAlias: string = 'port-labs'): Promise<string[]> {
     const importBlocks: string[] = [];
     
     scorecards.forEach((scorecard: PortScorecard) => {
@@ -89,7 +89,7 @@ export async function generateScorecardImports(scorecards: PortScorecard[]): Pro
                 `import {
   to = port_system_blueprint.${scorecard.blueprint}
   id = "${scorecard.blueprint}"
-  provider = port-labs
+  provider = ${providerAlias}
 }`
             );
         } else {
@@ -97,7 +97,7 @@ export async function generateScorecardImports(scorecards: PortScorecard[]): Pro
                 `import {
   to = port_scorecard.${scorecard.identifier}
   id = "${scorecard.blueprint}:${scorecard.identifier}"
-  provider = port-labs
+  provider = ${providerAlias}
 }`
             );
         }
@@ -110,7 +110,7 @@ const ensureValidResourceName = (id: string, integrationType: string) => {
     return !isNaN(Number(trimmedId)) || !/[a-zA-Z]/.test(trimmedId) || /^\{/.test(trimmedId) ? `${integrationType}-${trimmedId.replace(/[{}]/g, '')}` : trimmedId;
 };
 
-export async function generateIntegrationImports(integrations: PortIntegration[]): Promise<string[]> {
+export async function generateIntegrationImports(integrations: PortIntegration[], providerAlias: string = 'port-labs'): Promise<string[]> {
     const importBlocks: string[] = [];
     
     integrations.forEach((integration: PortIntegration) => {
@@ -118,7 +118,7 @@ export async function generateIntegrationImports(integrations: PortIntegration[]
             `import {
   to = port_integration.${ensureValidResourceName(integration.identifier, integration.integrationType)}
   id = "${integration.identifier}"
-  provider = port-labs
+  provider = ${providerAlias}
 }`
         );
     });
@@ -126,7 +126,7 @@ export async function generateIntegrationImports(integrations: PortIntegration[]
     return importBlocks;
 }
 
-export async function generateWebhookImports(webhooks: PortWebhook[]): Promise<string[]> {
+export async function generateWebhookImports(webhooks: PortWebhook[], providerAlias: string = 'port-labs'): Promise<string[]> {
     const importBlocks: string[] = [];
     
     webhooks.forEach((webhook: PortWebhook) => {
@@ -134,7 +134,7 @@ export async function generateWebhookImports(webhooks: PortWebhook[]): Promise<s
             `import {
   to = port_webhook.${webhook.identifier}
   id = "${webhook.identifier}"
-  provider = port-labs
+  provider = ${providerAlias}
 }`
         );
     });
@@ -142,7 +142,7 @@ export async function generateWebhookImports(webhooks: PortWebhook[]): Promise<s
     return importBlocks;
 }
 
-export async function generatePageImports(pages: PortPage[]): Promise<string[]> {
+export async function generatePageImports(pages: PortPage[], providerAlias: string = 'port-labs'): Promise<string[]> {
     const importBlocks: string[] = [];
     pages.forEach((page: PortPage) => {
         // Skip pages for system blueprints, or system features, or entity pages (not supported)
@@ -151,7 +151,7 @@ export async function generatePageImports(pages: PortPage[]): Promise<string[]> 
                 `import {
         to = port_page.${page.identifier}
         id = "${page.identifier}"
-        provider = port-labs
+        provider = ${providerAlias}
     }`
             );
         }
@@ -159,7 +159,7 @@ export async function generatePageImports(pages: PortPage[]): Promise<string[]> 
     return importBlocks;
 }
 
-export async function generateBlueprintImports(blueprints: PortBlueprint[]): Promise<string[]> {
+export async function generateBlueprintImports(blueprints: PortBlueprint[], providerAlias: string = 'port-labs'): Promise<string[]> {
     const importBlocks: string[] = [];
     
     blueprints.forEach((blueprint: PortBlueprint) => {
@@ -168,7 +168,7 @@ export async function generateBlueprintImports(blueprints: PortBlueprint[]): Pro
                 `import {
   to = port_system_blueprint.${blueprint.identifier}
   id = "${blueprint.identifier}"
-  provider = port-labs
+  provider = ${providerAlias}
 }`
             );
         } else {
@@ -176,7 +176,7 @@ export async function generateBlueprintImports(blueprints: PortBlueprint[]): Pro
                 `import {
   to = port_blueprint.${blueprint.identifier}
   id = "${blueprint.identifier}"
-  provider = port-labs
+  provider = ${providerAlias}
 }`
             );
         }
@@ -185,7 +185,7 @@ export async function generateBlueprintImports(blueprints: PortBlueprint[]): Pro
     return importBlocks;
 }
 
-export async function generateAggregationPropertyImports(blueprints: PortBlueprint[]): Promise<string[]> {
+export async function generateAggregationPropertyImports(blueprints: PortBlueprint[], providerAlias: string = 'port-labs'): Promise<string[]> {
     const importBlocks: string[] = [];
     blueprints.forEach((blueprint: PortBlueprint) => {
         if (Object.entries(blueprint.aggregationProperties).length > 0) {
@@ -194,7 +194,7 @@ export async function generateAggregationPropertyImports(blueprints: PortBluepri
                     `import {
                     to = port_system_blueprint.${blueprint.identifier}
                     id = "${blueprint.identifier}"
-                    provider = port-labs
+                    provider = ${providerAlias}
                 }`
                 );
             } else {
@@ -202,7 +202,7 @@ export async function generateAggregationPropertyImports(blueprints: PortBluepri
                     `import {
                     to = port_aggregation_properties.${blueprint.identifier}_aggregation_properties
                     id = "${blueprint.identifier}"
-                    provider = port-labs
+                    provider = ${providerAlias}
                 }`
                 );
             }
@@ -212,7 +212,7 @@ export async function generateAggregationPropertyImports(blueprints: PortBluepri
     return importBlocks;
 }
 
-export async function generateFolderImports(sidebarResponse: PortSidebarResponse): Promise<string[]> {
+export async function generateFolderImports(sidebarResponse: PortSidebarResponse, providerAlias: string = 'port-labs'): Promise<string[]> {
     const importBlocks: string[] = [];
 
     sidebarResponse.sidebar.items.forEach((item: PortSidebarItem) => {
@@ -225,7 +225,7 @@ export async function generateFolderImports(sidebarResponse: PortSidebarResponse
                 `import {
     to = port_folder.${item.identifier}
     id = "${item.identifier}"
-    provider = port-labs
+    provider = ${providerAlias}
 }`
             );
         }
@@ -234,7 +234,7 @@ export async function generateFolderImports(sidebarResponse: PortSidebarResponse
     return importBlocks;
 }
 
-export async function generateEntityImports(entities: PortEntities[]): Promise<string[]> {
+export async function generateEntityImports(entities: PortEntities[], providerAlias: string = 'port-labs'): Promise<string[]> {
     const importBlocks: string[] = [];
     const systemBlueprintsImported = new Set<string>();
     // console.log(`Generating entity imports for ${entities} entities`);
@@ -246,7 +246,7 @@ export async function generateEntityImports(entities: PortEntities[]): Promise<s
                     `import {
                     to = port_system_blueprint.${entity.blueprint}
                     id = "${entity.blueprint}"
-                    provider = port-labs
+                    provider = ${providerAlias}
                     }`
                 );
             }
@@ -255,7 +255,7 @@ export async function generateEntityImports(entities: PortEntities[]): Promise<s
                 `import {
                 to = port_entity.${cleanIdentifier(entity.identifier)}
                 id = "${entity.blueprint}:${entity.identifier}"
-                provider = port-labs
+                provider = ${providerAlias}
                 }`
             );
         }
