@@ -81,17 +81,21 @@ export async function generateActionImports(actions: PortAction[], providerAlias
 
 export async function generateScorecardImports(scorecards: PortScorecard[], providerAlias: string = 'port-labs'): Promise<string[]> {
     const importBlocks: string[] = [];
+    const systemBlueprintsImported = new Set<string>();
     
     scorecards.forEach((scorecard: PortScorecard) => {
         // Check if the scorecard belongs to a system blueprint
         if (isSystemBlueprint(scorecard.blueprint)) {
-            importBlocks.push(
-                `import {
+            if (!systemBlueprintsImported.has(scorecard.blueprint)) {
+                systemBlueprintsImported.add(scorecard.blueprint);
+                importBlocks.push(
+                    `import {
   to = port_system_blueprint.${scorecard.blueprint}
   id = "${scorecard.blueprint}"
   provider = ${providerAlias}
 }`
-            );
+                );
+            }
         } else {
             importBlocks.push(
                 `import {
@@ -189,15 +193,8 @@ export async function generateAggregationPropertyImports(blueprints: PortBluepri
     const importBlocks: string[] = [];
     blueprints.forEach((blueprint: PortBlueprint) => {
         if (Object.entries(blueprint.aggregationProperties).length > 0) {
-            if (isSystemBlueprint(blueprint.identifier)) {
-                importBlocks.push(
-                    `import {
-                    to = port_system_blueprint.${blueprint.identifier}
-                    id = "${blueprint.identifier}"
-                    provider = ${providerAlias}
-                }`
-                );
-            } else {
+            // Skip system blueprints here to avoid duplicate imports; they are handled in blueprint imports
+            if (!isSystemBlueprint(blueprint.identifier)) {
                 importBlocks.push(
                     `import {
                     to = port_aggregation_properties.${blueprint.identifier}_aggregation_properties
