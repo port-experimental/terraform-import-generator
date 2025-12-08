@@ -81,22 +81,10 @@ export async function generateActionImports(actions: PortAction[], providerAlias
 
 export async function generateScorecardImports(scorecards: PortScorecard[], providerAlias: string = 'port-labs'): Promise<string[]> {
     const importBlocks: string[] = [];
-    const systemBlueprintsImported = new Set<string>();
     
     scorecards.forEach((scorecard: PortScorecard) => {
-        // Check if the scorecard belongs to a system blueprint
-        if (isSystemBlueprint(scorecard.blueprint)) {
-            if (!systemBlueprintsImported.has(scorecard.blueprint)) {
-                systemBlueprintsImported.add(scorecard.blueprint);
-                importBlocks.push(
-                    `import {
-  to = port_system_blueprint.${scorecard.blueprint}
-  id = "${scorecard.blueprint}"
-  provider = ${providerAlias}
-}`
-                );
-            }
-        } else {
+        // Skip system blueprints - they are imported in generateBlueprintImports
+        if (!isSystemBlueprint(scorecard.blueprint)) {
             importBlocks.push(
                 `import {
   to = port_scorecard.${scorecard.identifier}
@@ -109,6 +97,7 @@ export async function generateScorecardImports(scorecards: PortScorecard[], prov
     
     return importBlocks;
 }
+
 const ensureValidResourceName = (id: string, integrationType: string) => {
     const trimmedId = id.trim();
     return !isNaN(Number(trimmedId)) || !/[a-zA-Z]/.test(trimmedId) || /^\{/.test(trimmedId) ? `${integrationType}-${trimmedId.replace(/[{}]/g, '')}` : trimmedId;
@@ -193,7 +182,7 @@ export async function generateAggregationPropertyImports(blueprints: PortBluepri
     const importBlocks: string[] = [];
     blueprints.forEach((blueprint: PortBlueprint) => {
         if (Object.entries(blueprint.aggregationProperties).length > 0) {
-            // Skip system blueprints here to avoid duplicate imports; they are handled in blueprint imports
+            // Skip system blueprints - they are imported in generateBlueprintImports
             if (!isSystemBlueprint(blueprint.identifier)) {
                 importBlocks.push(
                     `import {
