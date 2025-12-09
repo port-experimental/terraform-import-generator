@@ -7,11 +7,7 @@ interface OAuthResponse {
 }
 
 function getPortApiBaseUrl(): string {
-    const baseUrl = process.env.PORT_API_BASE_URL;
-    
-    if (!baseUrl) {
-        throw new Error('PORT_API_BASE_URL must be set in the environment variables');
-    }
+    const baseUrl = process.env.PORT_API_BASE_URL || 'https://api.getport.io';
     
     let cleanUrl = baseUrl.replace(/^https?:\/\//, '');
     cleanUrl = cleanUrl.split('/')[0];
