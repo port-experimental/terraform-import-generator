@@ -3,10 +3,14 @@
 ## Usage
 
 1. Set env vars:
-```
+```bash
 export PORT_CLIENT_ID=<your_client_id>
 export PORT_CLIENT_SECRET=<your_client_secret>
+export PORT_API_BASE_URL=api.getport.io # required. Use api.us.port.io or app.us.port.io for US region
 export PORT_BETA_FEATURES_ENABLED=true # this is required if you want to export pages
+
+# Optional: Set the Terraform provider base URL (defaults to https://api.getport.io)
+export TF_VAR_port_base_url=https://api.getport.io  # Use https://api.us.getport.io for US region
 ```
 
 2. Install dependencies, install CLI
