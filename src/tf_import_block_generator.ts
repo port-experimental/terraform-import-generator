@@ -149,8 +149,8 @@ export async function generateWebhookImports(webhooks: PortWebhook[], providerAl
 export async function generatePageImports(pages: PortPage[], providerAlias: string = 'port-labs'): Promise<string[]> {
     const importBlocks: string[] = [];
     pages.forEach((page: PortPage) => {
-        // Skip pages for system blueprints, or system features, or entity pages (not supported)
-        if (!page.identifier.startsWith('$') && !page.identifier.startsWith('_') && page.type !== 'entity') {
+        // Skip pages for system blueprints or system features
+        if (!page.identifier.startsWith('$') && !page.identifier.startsWith('_')) {
             importBlocks.push(
                 `import {
         to = port_page.${page.identifier}
