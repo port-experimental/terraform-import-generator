@@ -1,123 +1,144 @@
 # Terraform Import Generator
 
-## Usage
+Generate Terraform import blocks for Port resources and migrate configurations between Port organizations.
 
-1. Set env vars:
+## Quick Start
+
 ```bash
-export PORT_CLIENT_ID=<your_client_id>
-export PORT_CLIENT_SECRET=<your_client_secret>
-export PORT_API_BASE_URL=api.getport.io # required. Use api.us.port.io or app.us.port.io for US region
-export PORT_BETA_FEATURES_ENABLED=true # this is required if you want to export pages
+# Install
+npm install && npm run build && npm link
 
-# Optional: Set the Terraform provider base URL (defaults to https://api.getport.io)
-export TF_VAR_port_base_url=https://api.getport.io  # Use https://api.us.getport.io for US region
+# Set credentials
+export PORT_CLIENT_ID=<source_client_id>
+export PORT_CLIENT_SECRET=<source_client_secret>
+export PORT_BETA_FEATURES_ENABLED=true
+
+# Run everything in one command
+port-tf-import -m --auto-fix --report --terraform
 ```
 
-2. Install dependencies, install CLI
-```
-npm install
-npm run build
-npm link
+This single command:
+1. Fetches all resources from Port
+2. Generates import blocks (`*_imports.tf`)
+3. Creates `providers.tf` (if missing)
+4. Runs `terraform init`
+5. Runs `terraform plan -generate-config-out=generated.tf`
+6. Applies fixes automatically
+7. Validates with `terraform plan`
 
-```
+## Migration Workflow
 
-3. Run CLI
+### One-Command Migration (Recommended)
 
-```
-port-tf-import
-```
-By default the following import files will be generated:
-- webhook_imports.tf
-- action_imports.tf
-- blueprint_imports.tf
-- scorecard_imports.tf
-- integration_imports.tf
-- page_imports.tf
-- folder_imports.tf
-- aggregation_property_imports.tf
+```bash
+export PORT_CLIENT_ID=<source_client_id>
+export PORT_CLIENT_SECRET=<source_client_secret>
+export PORT_BETA_FEATURES_ENABLED=true
 
-If you want to fetch entities for specific blueprints, specify them via command line argument:
-```
-port-tf-import --export-entities-for-blueprints blueprint1,blueprint2
-port-tf-import -b blueprint1,blueprint2
+port-tf-import -m --auto-fix --report --terraform
 ```
 
-### Configuring Provider Alias
+Then:
+1. Review `migration_report.md` for blueprint dependencies
+2. Add `depends_on` to `generated.tf` for blueprints with relations
+3. Switch to target credentials and apply:
 
-By default, the generated import blocks use `port-labs` as the provider alias. You can configure this using:
+```bash
+export PORT_CLIENT_ID=<target_client_id>
+export PORT_CLIENT_SECRET=<target_client_secret>
 
-**CLI option:**
-```
-port-tf-import -p port
-port-tf-import --provider-alias port
-```
-
-**Environment variable:**
-```
-export PORT_PROVIDER_ALIAS=port
-port-tf-import
-```
-
-**Precedence:** CLI option > environment variable > default (`port-labs`)
-
-This is useful when your Terraform configuration uses a different provider alias, for example:
-```hcl
-terraform {
-  required_providers {
-    port = {
-      source  = "port-labs/port-labs"
-      version = "2.14.4"
-    }
-  }
-}
-
-provider "port" {
-}
-```
-
-4. You now have all the import statements in `*.tf` - take a look
-
-```
-ls *.tf
-cat blueprint_imports.tf
-```
-
-5. Now run terraform to import
-
-```
-terraform plan -generate-config-out=generated.tf
-```
-
-## Applying
-
-1. Now update your env vars to point to the new target org
-
-2. If you have relations between your blueprints, you will need to make sure terraform creates them in a sensible order, or else it will try to create all blueprints at once and there will be issues about blueprints not being found. Create `depends_on` statements for each dependency from left to right
-
-```
-resource "port_blueprint" "repository" {
-  provider = port  # or port-labs, depending on your configuration
-  depends_on = [port_blueprint.service]
-  ...
-  relations = {
-    service = {
-      description = null
-      many        = false
-      required    = false
-      target      = "service"
-      title       = "Service"
-    }
-  ...
-  }
-```
-
-resource "port_blueprint" "service" {
-  ...
-}
-```
-
-3. Run apply
-
-```
+rm *_imports.tf
 terraform apply
 ```
+
+### Manual Step-by-Step
+
+If you prefer more control, run each step separately:
+
+```bash
+# Step 1: Generate imports and fix script
+port-tf-import -m --auto-fix --report --generate-fix-script
+
+# Step 2: Create providers.tf (see CLI Options section)
+
+# Step 3: Run terraform
+terraform init
+terraform plan -generate-config-out=generated.tf
+
+# Step 4: Apply fixes
+./fix_generated.sh
+
+# Step 5: Validate
+terraform plan
+```
+
+## CLI Options
+
+| Option | Description |
+|--------|-------------|
+| `-m, --migration-mode` | Display warnings for common migration issues |
+| `--auto-fix` | Track fixes for reporting (entity types, relation titles, page ordering) |
+| `--report` | Generate `migration_report.md` |
+| `--generate-fix-script` | Generate `fix_generated.sh` |
+| `--terraform` | Run terraform init, plan, generate config, and apply fixes automatically |
+| `--exclude-github-integrations` | Skip GitHub integrations |
+| `--exclude-system-blueprints` | Skip system blueprints (`_*` prefixed) |
+| `--exclude-ai-pages` | Skip pages with AI agent widgets |
+| `--exclude <patterns...>` | Pattern-based exclusion (e.g., `"integration:GitHub-*"`) |
+| `-b, --export-entities-for-blueprints <ids>` | Export entities for specific blueprints |
+| `-p, --provider-alias <alias>` | Provider alias (default: `port-labs`) |
+
+## Fix Script
+
+The `fix_generated.sh` script fixes issues in `generated.tf` that Terraform cannot handle:
+
+| Issue | Fix |
+|-------|-----|
+| Entity page types | `type = "entity"` → `type = "blueprint-entities"` |
+| jq_condition expressions | `expressions = null` → `expressions = []` |
+
+## Migration Warnings
+
+Use `-m` to detect issues requiring manual attention:
+
+| Warning | Description | Action |
+|---------|-------------|--------|
+| GitHub Integrations | Installation IDs are org-specific | Reconfigure in target |
+| System Blueprints | `_user`, `_team`, etc. | Must exist in target |
+| AI Agent Pages | Missing agentIdentifier | Configure manually |
+| Automation Triggers | May need userInputs | Review after apply |
+| Page Ordering | References non-imported pages | Fixed by script |
+
+## Filtering
+
+Exclude resources that shouldn't be migrated:
+
+```bash
+# Exclude GitHub integrations and AI pages
+port-tf-import -m --exclude-github-integrations --exclude-ai-pages
+
+# Pattern-based exclusion
+port-tf-import -m --exclude "integration:GitHub-*" --exclude "blueprint:_*"
+```
+
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `PORT_CLIENT_ID` | Port client ID (required) |
+| `PORT_CLIENT_SECRET` | Port client secret (required) |
+| `PORT_BETA_FEATURES_ENABLED` | Set to `true` for page support |
+| `PORT_BASE_URL` | API URL (default: `https://api.getport.io`) |
+| `PORT_PROVIDER_ALIAS` | Provider alias for import blocks |
+
+For US region: `PORT_BASE_URL=https://api.us.getport.io`
+
+## Generated Files
+
+| File | Description |
+|------|-------------|
+| `*_imports.tf` | Import blocks for each resource type |
+| `providers.tf` | Terraform provider config (created by `--terraform` if missing) |
+| `generated.tf` | Terraform resource config (created by `terraform plan`) |
+| `migration_report.md` | Migration summary with dependencies |
+| `fix_generated.sh` | Post-processing fix script |
