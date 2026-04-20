@@ -1,7 +1,7 @@
 // Migration warning types
 export interface MigrationWarning {
     category: 'github-integration' | 'system-blueprint' | 'ai-agent-page' |
-              'page-ordering' | 'relation-title' | 'automation-trigger' | 'entity-page-type';
+              'page-ordering' | 'relation-title' | 'automation-trigger';
     resourceType: string;
     resourceId: string;
     message: string;
@@ -14,12 +14,10 @@ export interface MigrationWarnings {
     pageOrdering: MigrationWarning[];
     relationTitles: MigrationWarning[];
     automationTriggers: MigrationWarning[];
-    entityPageTypes: MigrationWarning[];
 }
 
 // Auto-fix types
 export interface AutoFixResult {
-    entityPageTypesFixed: string[];
     relationTitlesFixed: { blueprint: string; relation: string; newTitle: string }[];
     pageOrderingFixed: string[];
 }
@@ -372,7 +370,6 @@ export function detectMigrationWarnings(
         pageOrdering: [],
         relationTitles: [],
         automationTriggers: [],
-        entityPageTypes: [],
     };
 
     // Build set of imported page identifiers (pages that will be managed by terraform)
@@ -407,19 +404,9 @@ export function detectMigrationWarnings(
         }
     });
 
-    // Detect AI agent pages and entity page types
+    // Detect AI agent pages
     pages.forEach(page => {
         if (!page.identifier.startsWith('$') && !page.identifier.startsWith('_')) {
-            // Detect pages with type "entity" that need to be changed to "blueprint-entities"
-            if (page.type === 'entity') {
-                warnings.entityPageTypes.push({
-                    category: 'entity-page-type',
-                    resourceType: 'page',
-                    resourceId: page.identifier,
-                    message: `Page "${page.identifier}" has type "entity" (change to "blueprint-entities")`,
-                });
-            }
-
             if (hasAiAgentWidget(page)) {
                 warnings.aiAgentPages.push({
                     category: 'ai-agent-page',
@@ -476,13 +463,12 @@ export function detectMigrationWarnings(
     return warnings;
 }
 
-// Apply auto-fixes to pages (entity type and page ordering)
+// Apply auto-fixes to pages (page ordering)
 export function applyPageAutoFixes(
     pages: PortPage[],
     importedPageIds: Set<string>
 ): { pages: PortPage[]; fixes: AutoFixResult } {
     const fixes: AutoFixResult = {
-        entityPageTypesFixed: [],
         relationTitlesFixed: [],
         pageOrderingFixed: [],
     };
@@ -493,12 +479,6 @@ export function applyPageAutoFixes(
         // Skip system pages
         if (page.identifier.startsWith('$') || page.identifier.startsWith('_')) {
             return fixedPage;
-        }
-
-        // Fix entity page type -> blueprint-entities
-        if (page.type === 'entity') {
-            fixedPage.type = 'blueprint-entities';
-            fixes.entityPageTypesFixed.push(page.identifier);
         }
 
         // Fix page ordering issues
@@ -518,7 +498,6 @@ export function applyBlueprintAutoFixes(
     blueprints: PortBlueprint[]
 ): { blueprints: PortBlueprint[]; fixes: AutoFixResult } {
     const fixes: AutoFixResult = {
-        entityPageTypesFixed: [],
         relationTitlesFixed: [],
         pageOrderingFixed: [],
     };
@@ -649,6 +628,11 @@ export function filterPages(
             return true; // Let the normal import logic handle these
         }
 
+        // Exclude unsupported entity type pages
+        if (page.type === 'entity') {
+            return false;
+        }
+
         // Exclude AI agent pages
         if (options.excludeAiPages && hasAiAgentWidget(page)) {
             return false;
@@ -718,19 +702,6 @@ export function generateFixScript(warnings: MigrationWarnings): string {
     ];
 
     let hasFixableIssues = false;
-
-    // Entity page type fixes - ALWAYS include since Terraform fetches from API
-    if (warnings.entityPageTypes.length > 0) {
-        hasFixableIssues = true;
-        lines.push(`# Fix ${warnings.entityPageTypes.length} entity page types (change "entity" to "blueprint-entities")`);
-        lines.push('if [[ "$OSTYPE" == "darwin"* ]]; then');
-        lines.push('  sed -i \'\' \'s/type *= *"entity"/type = "blueprint-entities"/g\' generated.tf');
-        lines.push('else');
-        lines.push('  sed -i \'s/type *= *"entity"/type = "blueprint-entities"/g\' generated.tf');
-        lines.push('fi');
-        lines.push('echo "Fixed entity page types"');
-        lines.push('');
-    }
 
     // Always fix jq_condition expressions = null (provider requires expressions to be set)
     // This is a common issue with automation triggers
@@ -819,12 +790,12 @@ export function generateMigrationReport(
     // Calculate issues per resource type
     const blueprintIssues = warnings.systemBlueprints.length;
     const actionIssues = warnings.automationTriggers.length;
-    const pageIssues = warnings.aiAgentPages.length + warnings.pageOrdering.length + warnings.entityPageTypes.length;
+    const pageIssues = warnings.aiAgentPages.length + warnings.pageOrdering.length;
     const integrationIssues = warnings.githubIntegrations.length;
 
     lines.push(`| Blueprints | ${resourceCounts.blueprints} | ${blueprintIssues > 0 ? `${blueprintIssues} system` : '0'} |`);
     lines.push(`| Actions | ${resourceCounts.actions} | ${actionIssues > 0 ? `${actionIssues} automation trigger` : '0'} |`);
-    lines.push(`| Pages | ${resourceCounts.pages} | ${pageIssues > 0 ? `${warnings.aiAgentPages.length} AI agents, ${warnings.pageOrdering.length} ordering, ${warnings.entityPageTypes.length} entity type` : '0'} |`);
+    lines.push(`| Pages | ${resourceCounts.pages} | ${pageIssues > 0 ? `${warnings.aiAgentPages.length} AI agents, ${warnings.pageOrdering.length} ordering` : '0'} |`);
     lines.push(`| Integrations | ${resourceCounts.integrations} | ${integrationIssues > 0 ? `${integrationIssues} GitHub` : '0'} |`);
     lines.push(`| Scorecards | ${resourceCounts.scorecards} | 0 |`);
     lines.push(`| Webhooks | ${resourceCounts.webhooks} | 0 |`);
@@ -854,10 +825,6 @@ export function generateMigrationReport(
         const fixedNote = autoFixes.pageOrderingFixed.length > 0 ? ' (auto-fixed)' : '';
         warningItems.push(`- ${warnings.pageOrdering.length} page ordering issues${fixedNote}`);
     }
-    if (warnings.entityPageTypes.length > 0) {
-        const fixedNote = autoFixes.entityPageTypesFixed.length > 0 ? ' (auto-fixed)' : '';
-        warningItems.push(`- ${warnings.entityPageTypes.length} entity page types${fixedNote}`);
-    }
     if (warnings.automationTriggers.length > 0) {
         warningItems.push(`- ${warnings.automationTriggers.length} automation triggers (may need userInputs configuration)`);
     }
@@ -869,15 +836,11 @@ export function generateMigrationReport(
     }
 
     // Auto-fixes applied section
-    if (autoFixes.entityPageTypesFixed.length > 0 ||
-        autoFixes.relationTitlesFixed.length > 0 ||
+    if (autoFixes.relationTitlesFixed.length > 0 ||
         autoFixes.pageOrderingFixed.length > 0) {
         lines.push('');
         lines.push('## Auto-Fixes Applied');
 
-        if (autoFixes.entityPageTypesFixed.length > 0) {
-            lines.push(`- Entity page types fixed: ${autoFixes.entityPageTypesFixed.join(', ')}`);
-        }
         if (autoFixes.pageOrderingFixed.length > 0) {
             lines.push(`- Page ordering fixed: ${autoFixes.pageOrderingFixed.join(', ')}`);
         }

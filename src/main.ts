@@ -140,32 +140,10 @@ function displayMigrationWarnings(warnings: MigrationWarnings, autoFixApplied: b
     console.log('        Review and manually configure if terraform apply fails.\n');
   }
 
-  // Entity Page Types
-  if (warnings.entityPageTypes.length > 0) {
-    console.log(`Entity Page Types (${warnings.entityPageTypes.length} found):`);
-    const displayItems = warnings.entityPageTypes.slice(0, 10);
-    displayItems.forEach(w => console.log(`  - ${w.resourceId}`));
-    if (warnings.entityPageTypes.length > 10) {
-      console.log(`  ... and ${warnings.entityPageTypes.length - 10} more`);
-    }
-    if (autoFixApplied) {
-      console.log('  Status: Auto-fixed (transformed to "blueprint-entities")\n');
-    } else {
-      console.log('  Note: Pages with type "entity" must be changed to "blueprint-entities"');
-      console.log('        in generated.tf. Terraform only accepts: blueprint-entities, dashboard, home.');
-      console.log('');
-      console.log('  Run this command to fix automatically:');
-      console.log('    sed -i \'\' \'s/type *= *"entity"/type = "blueprint-entities"/g\' generated.tf');
-      console.log('');
-      console.log('  Or on Linux:');
-      console.log('    sed -i \'s/type *= *"entity"/type = "blueprint-entities"/g\' generated.tf\n');
-    }
-  }
 }
 
 function displayAutoFixSummary(fixes: AutoFixResult): void {
-  const totalFixes = fixes.entityPageTypesFixed.length +
-                     fixes.relationTitlesFixed.length +
+  const totalFixes = fixes.relationTitlesFixed.length +
                      fixes.pageOrderingFixed.length;
 
   if (totalFixes === 0) {
@@ -173,12 +151,6 @@ function displayAutoFixSummary(fixes: AutoFixResult): void {
   }
 
   console.log('\n=== Auto-Fixes Applied ===\n');
-
-  if (fixes.entityPageTypesFixed.length > 0) {
-    console.log(`Entity Page Types Fixed (${fixes.entityPageTypesFixed.length}):`);
-    fixes.entityPageTypesFixed.forEach(id => console.log(`  - ${id}: "entity" -> "blueprint-entities"`));
-    console.log('');
-  }
 
   if (fixes.pageOrderingFixed.length > 0) {
     console.log(`Page Ordering Fixed (${fixes.pageOrderingFixed.length}):`);
@@ -270,7 +242,6 @@ async function main() {
 
     // Track auto-fixes
     let autoFixes: AutoFixResult = {
-      entityPageTypesFixed: [],
       relationTitlesFixed: [],
       pageOrderingFixed: [],
     };
@@ -290,7 +261,6 @@ async function main() {
       // Apply page auto-fixes
       const pageFixResult = applyPageAutoFixes(filteredPages, importedPageIds);
       filteredPages = pageFixResult.pages;
-      autoFixes.entityPageTypesFixed = pageFixResult.fixes.entityPageTypesFixed;
       autoFixes.pageOrderingFixed = pageFixResult.fixes.pageOrderingFixed;
 
       // Apply blueprint auto-fixes
