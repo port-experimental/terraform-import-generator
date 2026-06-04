@@ -28,6 +28,9 @@ export interface FilterOptions {
     excludeSystemBlueprints?: boolean;
     excludeAiPages?: boolean;
     excludePatterns?: string[];
+    includePages?: string[];
+    includeActions?: string[];
+    includeBlueprints?: string[];
 }
 
 // Blueprint dependency for depends_on generation
@@ -599,6 +602,11 @@ export function filterBlueprints(
     options: FilterOptions
 ): PortBlueprint[] {
     return blueprints.filter(blueprint => {
+        // Strict whitelist: only include specified blueprints
+        if (options.includeBlueprints && options.includeBlueprints.length > 0) {
+            return options.includeBlueprints.includes(blueprint.identifier);
+        }
+
         // Exclude system blueprints (only if flag is set - they are still imported by default for reference)
         if (options.excludeSystemBlueprints && isSystemBlueprint(blueprint.identifier)) {
             return false;
@@ -617,6 +625,17 @@ export function filterBlueprints(
     });
 }
 
+// Filter actions based on filter options
+export function filterActions(
+    actions: PortAction[],
+    options: FilterOptions
+): PortAction[] {
+    if (!options.includeActions || options.includeActions.length === 0) {
+        return actions;
+    }
+    return actions.filter(action => options.includeActions!.includes(action.identifier));
+}
+
 // Filter pages based on filter options
 export function filterPages(
     pages: PortPage[],
@@ -626,6 +645,11 @@ export function filterPages(
         // Skip system pages
         if (page.identifier.startsWith('$') || page.identifier.startsWith('_')) {
             return true; // Let the normal import logic handle these
+        }
+
+        // Strict whitelist: only include specified pages
+        if (options.includePages && options.includePages.length > 0) {
+            return options.includePages.includes(page.identifier);
         }
 
         // Exclude unsupported entity type pages

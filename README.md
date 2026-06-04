@@ -77,7 +77,7 @@ terraform plan
 | Option | Description |
 |--------|-------------|
 | `-m, --migration-mode` | Display warnings for common migration issues |
-| `--auto-fix` | Track fixes for reporting (entity types, relation titles, page ordering) |
+| `--auto-fix` | Track fixes for reporting (relation titles, page ordering) |
 | `--report` | Generate `migration_report.md` |
 | `--generate-fix-script` | Generate `fix_generated.sh` |
 | `--terraform` | Run terraform init, plan, generate config, and apply fixes automatically |
@@ -85,6 +85,9 @@ terraform plan
 | `--exclude-system-blueprints` | Skip system blueprints (`_*` prefixed) |
 | `--exclude-ai-pages` | Skip pages with AI agent widgets |
 | `--exclude <patterns...>` | Pattern-based exclusion (e.g., `"integration:GitHub-*"`) |
+| `--include-pages <ids...>` | Whitelist: only export these page IDs |
+| `--include-actions <ids...>` | Whitelist: only export these action IDs |
+| `--include-blueprints <ids...>` | Whitelist: only export these blueprint IDs |
 | `-b, --export-entities-for-blueprints <ids>` | Export entities for specific blueprints |
 | `-p, --provider-alias <alias>` | Provider alias (default: `port-labs`) |
 
@@ -94,7 +97,6 @@ The `fix_generated.sh` script fixes issues in `generated.tf` that Terraform cann
 
 | Issue | Fix |
 |-------|-----|
-| Entity page types | `type = "entity"` → `type = "blueprint-entities"` |
 | jq_condition expressions | `expressions = null` → `expressions = []` |
 
 ## Migration Warnings
@@ -119,6 +121,16 @@ port-tf-import -m --exclude-github-integrations --exclude-ai-pages
 
 # Pattern-based exclusion
 port-tf-import -m --exclude "integration:GitHub-*" --exclude "blueprint:_*"
+```
+
+Include only specific resources (whitelist):
+
+```bash
+# Only export specific pages
+port-tf-import --include-pages my-page-id another-page-id
+
+# Only export specific blueprints and actions
+port-tf-import --include-blueprints service environment --include-actions deploy-service
 ```
 
 ## Environment Variables
