@@ -2,8 +2,6 @@
 
 Generate Terraform import blocks for Port resources and migrate configurations between Port organizations.
 
-> **Known issue — provider 2.21.x crash:** Port provider `~> 2.21.x` has a nil pointer in the `port_blueprint` schema that causes `terraform plan -generate-config-out` to crash. Pin to `~> 2.20.2` until a fix is released. See [PROVIDER_GAPS.md](PROVIDER_GAPS.md#8-blueprint-schema-nil-pointer-crash-provider--2210) for details.
-
 ## Quick Start
 
 ```bash
@@ -100,6 +98,7 @@ The `fix_generated.sh` script fixes issues in `generated.tf` that Terraform cann
 | Issue | Fix |
 |-------|-----|
 | jq_condition expressions | `expressions = null` → `expressions = []` |
+| date_format null (provider ≥ 2.21.8) | `date_format = null` lines removed (causes drift) |
 
 ## Migration Warnings
 

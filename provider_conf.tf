@@ -2,9 +2,7 @@ terraform {
   required_providers {
     port-labs = {
       source  = "port-labs/port-labs"
-      # Pinned to ~> 2.20.2: provider 2.21.x has a nil pointer in the port_blueprint
-      # schema that crashes terraform/OpenTofu during -generate-config-out. See PROVIDER_GAPS.md #8.
-      version = "~> 2.20.2"
+      version = "~> 2.21.10"
     }
   }
 }
