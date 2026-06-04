@@ -159,11 +159,47 @@ Users must review and potentially reconfigure automation triggers manually.
 
 ---
 
+## 8. Blueprint Schema Nil Pointer Crash (provider ≥ 2.21.0)
+
+**Severity:** Critical (crashes terraform/OpenTofu before config is generated)
+
+**Problem:**
+Running `terraform plan -generate-config-out=generated.tf` (or the OpenTofu equivalent) crashes with a nil pointer dereference inside the provider schema for `port_blueprint`. This affects both Terraform 1.5.7+ and OpenTofu 1.11.0+.
+
+```
+runtime error: invalid memory address or nil pointer dereference
+github.com/opentofu/opentofu/internal/configs/configschema.(*Block).Filter
+  configschema/filter.go:61
+github.com/opentofu/opentofu/internal/tofu.(*NodePlannableResourceInstance).generateHCLStringAttributes
+```
+
+The crash occurs in the core tool's HCL generation step when iterating over the provider schema for `port_blueprint`. A nested block entry in the schema has a nil pointer, which the HCL generator does not guard against. This was introduced in provider `v2.21.x` (likely with the `date_format` attribute added to `date_time` properties in v2.21.8, though all 2.21.x versions are affected).
+
+**Workaround:**
+Pin the provider to `~> 2.20.2` (the last stable release before 2.21.x):
+
+```hcl
+terraform {
+  required_providers {
+    port-labs = {
+      source  = "port-labs/port-labs"
+      version = "~> 2.20.2"
+    }
+  }
+}
+```
+
+**Suggested Fix:**
+The Port provider must ensure no nested block pointer in the `port_blueprint` schema is nil. All `NestedBlocks` map entries must point to a valid `*schema.Resource`.
+
+---
+
 ## Summary Table
 
 | Issue | Severity | Blocks Apply? | Auto-Fixable? |
 |-------|----------|---------------|---------------|
-| Entity page type mismatch | High | Yes | Yes (sed) |
+| Blueprint schema crash (≥2.21.0) | Critical | Yes (crash) | Yes (pin provider version) |
+| Entity page type mismatch | High | Yes | Yes (skip entity pages) |
 | Null relation titles | Medium | No (drift) | Yes (manual edit) |
 | GitHub installation IDs | Medium | No | No (manual reconfig) |
 | System blueprints | Low | Yes | Yes (remove from config) |
