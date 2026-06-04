@@ -739,16 +739,6 @@ export function generateFixScript(warnings: MigrationWarnings): string {
     lines.push('echo "Fixed jq_condition expressions"');
     lines.push('');
 
-    // Fix date_format = null on date_time blueprint properties (introduced in provider 2.21.8)
-    // The provider generates date_format = null which causes perpetual drift; remove it entirely
-    lines.push('# Fix date_format = null on date_time properties (provider 2.21.8+)');
-    lines.push('if [[ "$OSTYPE" == "darwin"* ]]; then');
-    lines.push('  sed -i \'\' \'/date_format *= *null/d\' generated.tf');
-    lines.push('else');
-    lines.push('  sed -i \'/date_format *= *null/d\' generated.tf');
-    lines.push('fi');
-    lines.push('echo "Fixed date_format nulls"');
-    lines.push('');
 
     // Relation title fixes - these need manual review but we provide guidance
     if (warnings.relationTitles.length > 0) {

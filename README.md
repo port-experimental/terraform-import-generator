@@ -98,7 +98,6 @@ The `fix_generated.sh` script fixes issues in `generated.tf` that Terraform cann
 | Issue | Fix |
 |-------|-----|
 | jq_condition expressions | `expressions = null` → `expressions = []` |
-| date_format null (provider ≥ 2.21.8) | `date_format = null` lines removed (causes drift) |
 
 ## Migration Warnings
 
