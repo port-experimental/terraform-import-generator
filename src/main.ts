@@ -23,6 +23,7 @@ import {
   filterIntegrations,
   filterBlueprints,
   filterPages,
+  filterActions,
   generateFixScript,
   generateMigrationReport,
 } from './tf_import_block_generator';
@@ -38,11 +39,14 @@ program
   .option('-b, --export-entities-for-blueprints <ids>', 'Comma-separated list of blueprint IDs to fetch entities for', (val) => val.split(',').map(bp => bp.trim()).filter(Boolean))
   .option('-p, --provider-alias <alias>', 'Terraform provider alias to use in import blocks (default: port-labs, can also be set via PORT_PROVIDER_ALIAS env var)')
   .option('-m, --migration-mode', 'Enable migration mode with warnings for common migration issues')
-  .option('--auto-fix', 'Automatically fix known issues during generation (entity page types, null relation titles, page ordering)')
+  .option('--auto-fix', 'Automatically fix known issues during generation (null relation titles, page ordering)')
   .option('--exclude-github-integrations', 'Exclude GitHub integrations from import (they require manual reconfiguration)')
   .option('--exclude-system-blueprints', 'Exclude system blueprints (_* prefixed) from import')
   .option('--exclude-ai-pages', 'Exclude pages containing AI agent widgets')
   .option('--exclude <patterns...>', 'Pattern-based exclusion (e.g., "integration:GitHub-*" "page:_*")')
+  .option('--include-pages <ids...>', 'Only export these page IDs (whitelist)')
+  .option('--include-actions <ids...>', 'Only export these action IDs (whitelist)')
+  .option('--include-blueprints <ids...>', 'Only export these blueprint IDs (whitelist)')
   .option('--generate-fix-script', 'Generate fix_generated.sh with sed commands for remaining issues')
   .option('--report', 'Generate migration_report.md with summary of exported resources and issues')
   .option('--terraform', 'Run terraform plan -generate-config-out=generated.tf and apply fixes automatically')
@@ -185,6 +189,9 @@ async function main() {
     excludeSystemBlueprints: options.excludeSystemBlueprints || false,
     excludeAiPages: options.excludeAiPages || false,
     excludePatterns: options.exclude || [],
+    includePages: options.includePages,
+    includeActions: options.includeActions,
+    includeBlueprints: options.includeBlueprints,
   };
 
   if (!PORT_CLIENT_ID || !PORT_CLIENT_SECRET) {
@@ -236,6 +243,7 @@ async function main() {
     }
 
     // Apply filters
+    let filteredActions = filterActions(actions.actions, filterOptions);
     let filteredIntegrations = filterIntegrations(integrations.integrations, filterOptions);
     let filteredBlueprints = filterBlueprints(blueprints.blueprints, filterOptions);
     let filteredPages = filterPages(pages.pages, filterOptions);
@@ -298,7 +306,7 @@ async function main() {
     }
 
     console.log('generating tf import files');
-    const actionImports = await generateActionImports(actions.actions, providerAlias);
+    const actionImports = await generateActionImports(filteredActions, providerAlias);
     const blueprintImports = await generateBlueprintImports(filteredBlueprints, providerAlias);
     const aggregationPropertyImports = await generateAggregationPropertyImports(filteredBlueprints, providerAlias);
     const scorecardImports = await generateScorecardImports(scorecards.scorecards, providerAlias);
@@ -362,7 +370,7 @@ async function main() {
 
       const resourceCounts = {
         blueprints: filteredBlueprints.length,
-        actions: actions.actions.length,
+        actions: filteredActions.length,
         pages: filteredPages.length,
         integrations: filteredIntegrations.length,
         scorecards: scorecards.scorecards.length,
