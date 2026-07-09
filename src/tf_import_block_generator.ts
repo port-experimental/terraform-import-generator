@@ -739,6 +739,7 @@ export function generateFixScript(warnings: MigrationWarnings): string {
     lines.push('echo "Fixed jq_condition expressions"');
     lines.push('');
 
+
     // Relation title fixes - these need manual review but we provide guidance
     if (warnings.relationTitles.length > 0) {
         lines.push(`# Fix ${warnings.relationTitles.length} null relation titles`);
